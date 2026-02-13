@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Task, TaskList, AppState, ThemeColor } from './types';
-import { storage } from './services/storage';
-import { getSmartBreakdown } from './services/gemini';
-import Sidebar from './components/Sidebar';
-import TaskView from './components/TaskView';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Task, TaskList, AppState } from './types.ts';
+import { storage } from './services/storage.ts';
+import { getSmartBreakdown } from './services/gemini.ts';
+import Sidebar from './components/Sidebar.tsx';
+import TaskView from './components/TaskView.tsx';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(storage.load());
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  // Sync with storage on state change
   useEffect(() => {
     storage.save(state);
   }, [state]);

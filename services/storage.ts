@@ -1,5 +1,5 @@
 
-import { Task, TaskList, AppState } from '../types';
+import { Task, TaskList, AppState } from '../types.ts';
 
 const STORAGE_KEY = 'taskmaster_db_v1';
 

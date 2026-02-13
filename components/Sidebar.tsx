@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TaskList, ThemeColor } from '../types';
+import { TaskList, ThemeColor } from '../types.ts';
 
 interface SidebarProps {
   lists: TaskList[];
