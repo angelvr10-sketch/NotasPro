@@ -1,0 +1,7 @@
+{
+  "name": "NotasPro",
+  "description": "A sophisticated task management application with multi-list support, persistent storage, and AI-powered task breakdowns using Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
