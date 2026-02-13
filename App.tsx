@@ -6,28 +6,36 @@ import { getSmartBreakdown } from './services/gemini.ts';
 import Sidebar from './components/Sidebar.tsx';
 import TaskView from './components/TaskView.tsx';
 
+// Fallback para entornos donde crypto.randomUUID no esté disponible
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+};
+
 const App: React.FC = () => {
-  const [state, setState] = useState<AppState>(storage.load());
+  const [state, setState] = useState<AppState>(() => storage.load());
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     storage.save(state);
   }, [state]);
 
-  const activeList = useMemo(() => 
-    state.lists.find(l => l.id === state.activeListId) || state.lists[0],
-    [state.lists, state.activeListId]
-  );
+  const activeList = useMemo(() => {
+    const found = state.lists.find(l => l.id === state.activeListId);
+    return found || (state.lists.length > 0 ? state.lists[0] : null);
+  }, [state.lists, state.activeListId]);
 
-  const activeTasks = useMemo(() => 
-    state.tasks.filter(t => t.listId === activeList?.id)
-      .sort((a, b) => b.createdAt - a.createdAt),
-    [state.tasks, activeList]
-  );
+  const activeTasks = useMemo(() => {
+    if (!activeList) return [];
+    return state.tasks.filter(t => t.listId === activeList.id)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }, [state.tasks, activeList]);
 
   const handleAddList = (name: string, color: string) => {
     const newList: TaskList = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name,
       color,
       createdAt: Date.now()
@@ -62,7 +70,7 @@ const App: React.FC = () => {
   const handleAddTask = (title: string) => {
     if (!activeList) return;
     const newTask: Task = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       listId: activeList.id,
       title,
       completed: false,
@@ -91,21 +99,26 @@ const App: React.FC = () => {
   const handleSmartBreakdown = async (task: Task) => {
     if (isAiLoading) return;
     setIsAiLoading(true);
-    const subtasks = await getSmartBreakdown(task.title);
-    if (subtasks.length > 0) {
-      const newTasks: Task[] = subtasks.map(title => ({
-        id: crypto.randomUUID(),
-        listId: task.listId,
-        title,
-        completed: false,
-        createdAt: Date.now()
-      }));
-      setState(prev => ({
-        ...prev,
-        tasks: [...newTasks, ...prev.tasks]
-      }));
+    try {
+      const subtasks = await getSmartBreakdown(task.title);
+      if (subtasks.length > 0) {
+        const newTasks: Task[] = subtasks.map(title => ({
+          id: generateId(),
+          listId: task.listId,
+          title,
+          completed: false,
+          createdAt: Date.now()
+        }));
+        setState(prev => ({
+          ...prev,
+          tasks: [...newTasks, ...prev.tasks]
+        }));
+      }
+    } catch (err) {
+      console.error("Error in breakdown action:", err);
+    } finally {
+      setIsAiLoading(false);
     }
-    setIsAiLoading(false);
   };
 
   return (
